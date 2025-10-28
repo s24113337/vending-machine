@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>KENNETH'S VENDING MACHINE</title>
+<style>
+body{
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #ff6ec4, #7873f5);
+  color:#1a202c;
+  margin:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  padding:20px;
+}
+.machine{
+  background:#f7f7f7;
+  border-radius:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.3);
+  width:1100px;
+  max-width:100%;
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:24px;
+  padding:24px;
+}
+h1{
+  margin-top:0;
+  font-size:28px;
+  color:#4a5568;
+  text-align:center;
+  text-shadow:1px 1px #e2e8f0;
+}
+h2{
+  margin:16px 0 8px;
+  font-size:20px;
+  color:#6b46c1;
+  border-bottom:2px solid #d6bcfa;
+  padding-bottom:6px;
+}
+.category{margin-bottom:24px;}
+.items{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:14px;
+}
+.item{
+  background:#fff;
+  border-radius:12px;
+  padding:12px;
+  cursor:pointer;
+  transition:.2s;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  position:relative;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+.item:hover{transform:translateY(-4px); box-shadow:0 8px 20px rgba(0,0,0,0.2);}
+.item.disabled{opacity:0.5; cursor:not-allowed; transform:none;}
+.thumb{
+  width:70px;
+  height:70px;
+  border-radius:10px;
+  background:#e2e8f0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+  font-size:20px;
+  margin-bottom:6px;
+}
+.price{color:#38a169;font-weight:bold; margin-top:4px;}
+.sticker{
+  position:absolute;
+  top:6px;
+  right:6px;
+  background:#ecc94b;
+  color:#1a202c;
+  font-size:10px;
+  font-weight:bold;
+  padding:2px 6px;
+  border-radius:8px;
+}
+.controls{
+  background:#fff;
+  border-radius:16px;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+.status{
+  background:#edf2f7;
+  padding:10px;
+  border-radius:10px;
+  min-height:60px;
+}
+.coins{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.coin{
+  background:#6b46c1;
+  border:none;
+  border-radius:999px;
+  padding:8px 14px;
+  cursor:pointer;
+  color:#fff;
+  transition:.15s;
+  font-weight:600;
+}
+.coin:hover{background:#9f7aea; color:#fff;}
+.btn{
+  background:#38a169;
+  color:#fff;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+  transition:.15s;
+}
+.btn:hover{filter:brightness(1.15);}
+.secondary{background:transparent;border:1px solid #a0aec0;color:#4a5568;}
+.log{
+  background:#1a202c;
+  border-radius:10px;
+  padding:10px;
+  height:160px;
+  overflow:auto;
+  font-family:monospace;
+  font-size:13px;
+  color:#f7fafc;
+}
+.receipt{
+  background:#edf2f7;
+  border-radius:12px;
+  padding:10px;
+  font-family:monospace;
+  margin-top:10px;
+  color:#1a202c;
+  max-height:150px;
+  overflow:auto;
+}
+</style>
+</head>
+<body>
+<div class="machine">
+  <section>
+    <h1>KENNETH'S VENDING MACHINE</h1>
+    <div id="categories"></div>
+  </section>
+
+  <section class="controls">
+    <div>
+      <div><strong id="selName">No item selected</strong></div>
+      <div id="selCode" style="font-size:13px;color:#718096"></div>
+    </div>
+    <div style="font-size:14px">Inserted: <strong id="inserted">NT$0</strong></div>
+    <div class="status" id="status">Select an item to begin.</div>
+    <div class="coins" id="coinBtns"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" id="buyBtn">Buy</button>
+      <button class="btn secondary" id="cancelBtn">Cancel</button>
+      <button class="btn secondary" id="restockBtn">Restock</button>
+    </div>
+    <div class="log" id="log"></div>
+    <div class="receipt" id="receipt">Your receipt will appear here.</div>
+  </section>
+</div>
+
+<script>
+const vm={
+  categories:{
+    'Main Dishes':[
+      {code:'M1',name:'Burger',price:65,stock:5,type:'Main'},
+      {code:'M2',name:'Sandwich',price:50,stock:6,type:'Main'},
+      {code:'M3',name:'Hotdog',price:45,stock:8,type:'Main'},
+      {code:'M4',name:'Fried Rice',price:70,stock:4,type:'Main'},
+      {code:'M5',name:'Spaghetti',price:85,stock:3,type:'Main'},
+      {code:'M6',name:'Dumplings',price:60,stock:6,type:'Main'}
+    ],
+    'Desserts':[
+      {code:'D1',name:'Chocolate Cake',price:55,stock:5,type:'Dessert'},
+      {code:'D2',name:'Cheesecake',price:60,stock:4,type:'Dessert'},
+      {code:'D3',name:'Donut',price:35,stock:10,type:'Dessert'},
+      {code:'D4',name:'Ice Cream',price:40,stock:8,type:'Dessert'},
+      {code:'D5',name:'Cookies',price:30,stock:12,type:'Dessert'},
+      {code:'D6',name:'Cupcake',price:45,stock:7,type:'Dessert'}
+    ],
+    'Drinks':[
+      {code:'R1',name:'Water',price:25,stock:15,type:'Drink'},
+      {code:'R2',name:'Juice',price:35,stock:12,type:'Drink'},
+      {code:'R3',name:'Soda',price:30,stock:10,type:'Drink'},
+      {code:'R4',name:'Iced Tea',price:40,stock:10,type:'Drink'},
+      {code:'R5',name:'Coffee',price:45,stock:8,type:'Drink'},
+      {code:'R6',name:'Milk Tea',price:50,stock:9,type:'Drink'}
+    ]
+  },
+  inserted:0, sel:null
+};
+
+const $=id=>document.getElementById(id);
+const fmt=v=>`NT$${v}`;
+
+function log(m){const l=document.createElement('div'); l.textContent='> '+m; $('log').prepend(l);}
+function updateReceipt(message){$('receipt').innerHTML=message;}
+
+function render(){
+  const catContainer=$('categories');
+  catContainer.innerHTML='';
+  Object.entries(vm.categories).forEach(([cat,items])=>{
+    const sec=document.createElement('div'); sec.className='category';
+    sec.innerHTML='<h2>'+cat+'</h2>';
+    const grid=document.createElement('div'); grid.className='items';
+    items.forEach((it,i)=>{
+      const e=document.createElement('div');
+      e.className='item'+(it.stock<=0?' disabled':'');
+      e.innerHTML = 
+        "<div class='thumb'>"+it.code+"</div>"+
+        "<div>"+it.name+"</div>"+
+        "<div class='price'>"+fmt(it.price)+"</div>"+
+        "<div class='sticker'>"+it.type+"</div>"+
+        "<div style='font-size:12px;color:#718096'>"+it.stock+" left</div>";
+      e.onclick=()=>selectItem(cat,i);
+      grid.appendChild(e);
+    });
+    sec.appendChild(grid);
+    catContainer.appendChild(sec);
+  });
+  $('inserted').textContent=fmt(vm.inserted);
+  if(!vm.sel){ $('selName').textContent='No item selected'; $('selCode').textContent=''; $('status').textContent='Select an item to begin.'; return;}
+  const {cat,index}=vm.sel; const it=vm.categories[cat][index];
+  $('selName').textContent=it.name;
+  $('selCode').textContent=it.code+' — '+fmt(it.price);
+  const need=Math.max(0,it.price-vm.inserted);
+  $('status').textContent = it.stock<=0 ? 'Out of stock' : need>0 ? 'Need '+fmt(need)+' more' : 'Enough money! Press Buy. Change: '+fmt(vm.inserted - it.price);
+}
+
+function selectItem(cat,index){
+  const it=vm.categories[cat][index];
+  if(it.stock<=0){log(it.name+' is out of stock.'); return;}
+  vm.sel={cat,index};
+  log('Selected '+it.name+' ('+it.code+') for '+fmt(it.price));
+  render();
+}
+
+function insertCoin(v){vm.inserted+=v; log('Inserted '+fmt(v)+'. Total '+fmt(vm.inserted)); render();}
+
+function buy(){
+  if(!vm.sel){log('No item selected.'); return;}
+  const {cat,index}=vm.sel; const it=vm.categories[cat][index];
+  if(it.stock<=0){log('Out of stock.'); return;}
+  if(vm.inserted<it.price){log('Not enough money.'); return;}
+  const change = vm.inserted - it.price;
+  it.stock--; vm.inserted=0; vm.sel=null;
+  log('Dispensed '+it.name+'. Change returned: '+fmt(change));
+  updateReceipt(`<strong>Receipt:</strong><br>Item: ${it.name}<br>Type: ${it.type}<br>Price: ${fmt(it.price)}<br>Change returned: ${fmt(change)}`);
+  render();
+}
+
+function cancel(){if(vm.inserted===0){log('Nothing to cancel.'); return;} log('Returned '+fmt(vm.inserted)); updateReceipt('Transaction canceled. Money returned: '+fmt(vm.inserted)); vm.inserted=0; vm.sel=null; render();}
+
+function restock(){Object.values(vm.categories).forEach(cat=>cat.forEach(it=>it.stock=10)); log('Machine restocked.'); updateReceipt('Machine restocked.'); render();}
+
+function setup(){
+  [1,5,10,50,100].forEach(v=>{const b=document.createElement('button'); b.className='coin'; b.textContent='NT$'+v; b.onclick=()=>insertCoin(v); $('coinBtns').appendChild(b);});
+  $('buyBtn').onclick=buy;
+  $('cancelBtn').onclick=cancel;
+  $('restockBtn').onclick=restock;
+  render(); log('KENNETH\'S VENDING MACHINE ready (NTD).');
+}
+
+document.addEventListener('DOMContentLoaded',setup);
+</script>
+</body>
+</html>
