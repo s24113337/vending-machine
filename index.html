@@ -14,7 +14,7 @@ body{
   justify-content:center;
   align-items:center;
   min-height:100vh;
-  padding:20px;
+  padding:20px 20px 72px; /* extra bottom padding so fixed footer doesn't overlap content */
 }
 .machine{
   background:#f7f7f7;
@@ -149,6 +149,18 @@ h2{
   max-height:150px;
   overflow:auto;
 }
+.footer{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  text-align:center;
+  color:#f7fafc;
+  font-size:13px;
+  padding:10px 12px;
+  background:rgba(26,32,44,0.85);
+  z-index:50;
+}
 </style>
 </head>
 <body>
@@ -175,6 +187,8 @@ h2{
     <div class="receipt" id="receipt">Your receipt will appear here.</div>
   </section>
 </div>
+
+<footer class="footer">2015@John. All rights reserved.</footer>
 
 <script>
 const vm={
